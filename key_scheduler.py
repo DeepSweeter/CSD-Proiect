@@ -27,3 +27,4 @@ def key_schedule(key, w, r):
         j = (j + 1) % c
     
     return S
+
