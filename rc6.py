@@ -5,21 +5,26 @@ import math
 
 class rc6:
 
-    def __init__(self,key,plain_text,t,u,A,B,C,D):
+    def __init__(self,key):
         self.key = key
-        self.plain_text = plain_text
+        self.A = 0
+        self.B = 0
+        self.C = 0
+        self.D = 0
+        self.t = 0
+        self.u = 0
+
+
+    def encrypt(self, plain_text):
+        S = key_schedule(self.key)
         self.A,self.B,self.C,self.D = split_in_4registers(plain_text)
 
-
-    def encrypt(self):
-        S = key_schedule(self.key)
-
-        self.B = self.B + S[0]
-        self.D = self.D + S[1]
+        self.B = (self.B + S[0]) % FF32
+        self.D = (self.D + S[1]) % FF32
 
         for i in range(1,r+1):
-            self.t = leftRotate(multiply_modulo_2w(self.B,2*self.B+1),math.log2(w))
-            self.u = leftRotate(multiply_modulo_2w(self.D,2*self.D+1),math.log2(w))
+            self.t = leftRotate(multiply_modulo_2w(self.B,2*self.B+1),int(math.log2(w)))
+            self.u = leftRotate(multiply_modulo_2w(self.D,2*self.D+1),int(math.log2(w)))
             self.A = add_modulo_2w(leftRotate((xor(self.A,self.t)),self.u),S[2*i])
             self.C = add_modulo_2w(leftRotate((xor(self.C,self.u)),self.t),S[2*i + 1])
             self.A = self.B
@@ -27,29 +32,36 @@ class rc6:
             self.C = self.D
             self.D = self.A
         
-        self.A = multiply_modulo_2w(self.A,S[t-2])
-        self.C = multiply_modulo_2w(self.C,S[t-1])
+        self.A = add_modulo_2w(self.A,S[2*r + 2])
+        self.C = add_modulo_2w(self.C,S[2*r + 3])
                            
-        return self.A+self.B+self.C+self.D     
+        return struct.pack('I',self.A) + struct.pack('I',self.B) + struct.pack('I',self.C) + struct.pack('I',self.D)     
                  
 
     def decrypt(self,ctext):
         S = key_schedule(self.key)
+        self.A,self.B,self.C,self.D = split_in_4registers(ctext)
 
-        self.C = multiply_modulo_2w(self.C,-S[self.t-1])
-        self.A = multiply_modulo_2w(self.A,-S[self.t-2])
+
+        self.C = multiply_modulo_2w(self.C,-S[2*r + 3])
+        self.A = multiply_modulo_2w(self.A,-S[2*r + 2])
 
         for i in range (r,0,-1):
             self.A = self.D
             self.D = self.C
             self.C = self.B
             self.D = self.C
-            self.u = leftRotate(multiply_modulo_2w(self.D,2*self.D+1),math.log2(w))
-            self.t = leftRotate(multiply_modulo_2w(self.B,2*self.B+1),math.log2(w))
+            self.u = leftRotate(multiply_modulo_2w(self.D,2*self.D+1),int(math.log2(w)))
+            self.t = leftRotate(multiply_modulo_2w(self.B,2*self.B+1),int(math.log2(w)))
             self.C = xor(rightRotate(multiply_modulo_2w(self.C,-S[2*i+1]),self.t),self.u)
             self.A = xor(rightRotate(multiply_modulo_2w(self.A,-S[2*i]),self.u),self.t)
 
         self.D = self.D - S[1]
         self.B = self.B - S[1]
 
-        return self.A+self.B+self.C+self.D
+        bA = self.A.to_bytes(4, 'big')
+        bB = self.B.to_bytes(4, 'big')
+        bC = self.C.to_bytes(4, 'big')
+        bD = self.D.to_bytes(4, 'big')
+
+        return bA + bB + bC + bD

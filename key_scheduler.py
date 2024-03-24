@@ -2,7 +2,7 @@ from functions import *
 
 
 #TODO Check if this function works properly
-def key_schedule(key, w, r):
+def key_schedule(key):
     c = len(key) // (w // 8)
     rounds = 2 * (r + 1)
     L = [0] * rounds
@@ -13,7 +13,7 @@ def key_schedule(key, w, r):
     
     S = [0] * (2 * r + 4)
     S[0] = P32
-    for i in range(1, 2 * r + 3):
+    for i in range(1, 2 * r + 4):
         S[i] = (S[i - 1] + Q32) & FF32
 
     A = B = i = j = 0
@@ -21,8 +21,8 @@ def key_schedule(key, w, r):
     v = 3 * max(c, 2 * r + 4)
 
     for s in range(v):
-        A = S[i] = leftRotate((S[i] + A + B) & FF32, 3)
-        B = L[j] = leftRotate((L[j] + A + B) & FF32, (A + B))
+        A = S[i] = leftRotate((S[i] + A + B) % FF32, 3)
+        B = L[j] = leftRotate((L[j] + A + B) % FF32, (A + B))
         i = (i + 1) % (2 * r +4)
         j = (j + 1) % c
     
