@@ -19,12 +19,12 @@ class rc6:
         S = key_schedule(self.key)
         self.A,self.B,self.C,self.D = split_in_4registers(plain_text)
 
-        self.B = (self.B + S[0]) % FF32
-        self.D = (self.D + S[1]) % FF32
+        self.B = add_modulo_2w(self.B, S[0])
+        self.D = add_modulo_2w(self.D, S[1])
 
         for i in range(1,r+1):
-            self.t = leftRotate(multiply_modulo_2w(self.B,2*self.B+1),int(math.log2(w)))
-            self.u = leftRotate(multiply_modulo_2w(self.D,2*self.D+1),int(math.log2(w)))
+            self.t = leftRotate(multiply_modulo_2w(self.B,2*self.B+1),LN)
+            self.u = leftRotate(multiply_modulo_2w(self.D,2*self.D+1),LN)
             self.A = add_modulo_2w(leftRotate((xor(self.A,self.t)),self.u),S[2*i])
             self.C = add_modulo_2w(leftRotate((xor(self.C,self.u)),self.t),S[2*i + 1])
             self.A = self.B
@@ -51,10 +51,10 @@ class rc6:
             self.D = self.C
             self.C = self.B
             self.D = self.C
-            self.u = leftRotate(multiply_modulo_2w(self.D,2*self.D+1),int(math.log2(w)))
-            self.t = leftRotate(multiply_modulo_2w(self.B,2*self.B+1),int(math.log2(w)))
-            self.C = xor(rightRotate(multiply_modulo_2w(self.C,-S[2*i+1]),self.t),self.u)
-            self.A = xor(rightRotate(multiply_modulo_2w(self.A,-S[2*i]),self.u),self.t)
+            self.u = leftRotate(multiply_modulo_2w(self.D,2*self.D+1),LN)
+            self.t = leftRotate(multiply_modulo_2w(self.B,2*self.B+1),LN)
+            self.C = xor(rightRotate(add_modulo_2w(self.C,-S[2*i+1]),self.t),self.u)
+            self.A = xor(rightRotate(add_modulo_2w(self.A,-S[2*i]),self.u),self.t)
 
         self.D = self.D - S[1]
         self.B = self.B - S[1]
