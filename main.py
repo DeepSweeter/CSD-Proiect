@@ -24,10 +24,11 @@ if __name__ == "__main__":
     for byte in ctext:
         print('{:02X}'.format(byte), end=' ')
 
-    # dtext= rc6_class.decrypt(ctext)
-    # print("\nDecrypt Text = ", end=' ')
-    # for byte in dtext:
-    #     print('{:02X}'.format(byte), end=' ')
+    dtext= rc6_class.decrypt(ctext)
+    print("\nDecrypt Text = ", end=' ')
+    for byte in dtext:
+        print('{:02X}'.format(byte), end=' ')
+        
     print("\n")
 
 
