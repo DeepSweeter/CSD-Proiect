@@ -19,23 +19,23 @@ window.title("RC6 network aplication")
 
 #Buttons
 #Button open
-openButton = tk.Button(window, text="<-- Open File", command=open_file)
+openButton = tk.Button(window, text="<-- Open File", command=open_file,background="white",foreground="red")
 openButton.place(x=450, y=20, width=95, height=45)
 
 #Button cypt
-cryptButton = tk.Button(window, text="Encrypt -->")
+cryptButton = tk.Button(window, text="Encrypt -->",background="white",foreground="darkblue")
 cryptButton.place(x=450, y=90, width=95, height=45)
 
 #Button send packet
-sendButton = tk.Button(window, text="Send data")
+sendButton = tk.Button(window, text="Send data",background="red",foreground="white")
 sendButton.place(x=450, y=405, width=95, height=45)
 
 #Button decrypt
-decryptButton = tk.Button(window, text="Decrypt -->")
+decryptButton = tk.Button(window, text="Decrypt -->",background="white",foreground="darkblue")
 decryptButton.place(x=450, y=250, width=95, height=45)
 
 #Button generate key
-keyButton = tk.Button(window, text="Generate key -->")
+keyButton = tk.Button(window, text="Generate key -->",background="white",foreground="red")
 keyButton.place(x=20, y=375, width=100, height=45)
 
 #Textboxs
