@@ -19,24 +19,24 @@ window.title("RC6 network aplication")
 
 #Buttons
 #Button open
-openButton = tk.Button(window, text="Open File", command=open_file)
+openButton = tk.Button(window, text="<-- Open File", command=open_file)
 openButton.place(x=450, y=20, width=95, height=45)
 
 #Button cypt
-cryptButton = tk.Button(window, text="Encrypt")
+cryptButton = tk.Button(window, text="Encrypt -->")
 cryptButton.place(x=450, y=90, width=95, height=45)
 
 #Button send packet
 sendButton = tk.Button(window, text="Send data")
-sendButton.place(x=450, y=200, width=95, height=45)
+sendButton.place(x=450, y=405, width=95, height=45)
 
 #Button decrypt
-decryptButton = tk.Button(window, text="Decrypt")
-decryptButton.place(x=450, y=320, width=95, height=45)
+decryptButton = tk.Button(window, text="Decrypt -->")
+decryptButton.place(x=450, y=250, width=95, height=45)
 
 #Button generate key
-keyButton = tk.Button(window, text="Generate key")
-keyButton.place(x=450, y=390, width=95, height=45)
+keyButton = tk.Button(window, text="Generate key -->")
+keyButton.place(x=20, y=375, width=100, height=45)
 
 #Textboxs
 #Textbox plain text 
@@ -61,8 +61,8 @@ text_box_decrypt_text.insert(tk.END,"Aici textul decriptat")
 
 #Textbox key
 label4 = tk.Label(window,text="Key:")
-label4.place(x=20, y=330)
+label4.place(x=140, y=330)
 text_key_text = tk.Text(window)
-text_key_text.place(x=20, y=350, width=400, height=100)
+text_key_text.place(x=140, y=350, width=280, height=100)
 
 window.mainloop()
