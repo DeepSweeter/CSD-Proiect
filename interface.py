@@ -28,18 +28,22 @@ cryptButton.place(x=450, y=90, width=95, height=45)
 
 #Button send packet
 sendButton = tk.Button(window, text="Send data")
-sendButton.place(x=450, y=320, width=95, height=45)
+sendButton.place(x=450, y=200, width=95, height=45)
 
 #Button decrypt
 decryptButton = tk.Button(window, text="Decrypt")
-decryptButton.place(x=450, y=250, width=95, height=45)
+decryptButton.place(x=450, y=320, width=95, height=45)
+
+#Button generate key
+keyButton = tk.Button(window, text="Generate key")
+keyButton.place(x=450, y=390, width=95, height=45)
 
 #Textboxs
 #Textbox plain text 
 label1 = tk.Label(window,text="Plain text:")
 label1.place(x=20, y=0)
 text_box_plain_text = tk.Text(window)
-text_box_plain_text.place(x=20, y=20, width=400, height=430)
+text_box_plain_text.place(x=20, y=20, width=400, height=300)
 
 #Textbox cypher text 
 label2 = tk.Label(window,text="Cypher text:")
@@ -55,5 +59,10 @@ text_box_decrypt_text = tk.Text(window)
 text_box_decrypt_text.place(x=580, y=250, width=400, height=200)
 text_box_decrypt_text.insert(tk.END,"Aici textul decriptat") 
 
+#Textbox key
+label4 = tk.Label(window,text="Key:")
+label4.place(x=20, y=330)
+text_key_text = tk.Text(window)
+text_key_text.place(x=20, y=350, width=400, height=100)
 
 window.mainloop()
