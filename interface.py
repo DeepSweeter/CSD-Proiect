@@ -85,27 +85,27 @@ keyButton.place(x=20, y=375, width=100, height=45)
 #Textbox plain text 
 label1 = tk.Label(window,text="Plain text:", font =("Arial Black",8))
 label1.place(x=20, y=0)
-text_box_plain_text = tk.Text(window, font =("Times New Roman",14),foreground="green")
+text_box_plain_text = tk.Text(window, font =("Times New Roman",14),foreground="green", relief="solid")
 text_box_plain_text.place(x=20, y=20, width=400, height=300)
 
 #Textbox cypher text 
 label2 = tk.Label(window,text="Cypher text:", font =("Arial Black",8))
 label2.place(x=580, y=0)
-text_box_cypher_text = tk.Text(window, font =("Times New Roman",14),foreground="darkred")
+text_box_cypher_text = tk.Text(window, font =("Times New Roman",14),foreground="darkred", relief="solid")
 text_box_cypher_text.place(x=580, y=20, width=400, height=200)
 #text_box_cypher_text.insert(tk.END,"Aici textul criptat") 
 
 #Textbox decrypt text 
 label3 = tk.Label(window,text="Decrypt text:", font =("Arial Black",8))
 label3.place(x=580, y=230)
-text_box_decrypt_text = tk.Text(window, font =("Times New Roman",14),foreground="darkgreen")
+text_box_decrypt_text = tk.Text(window, font =("Times New Roman",14),foreground="darkgreen", relief="solid")
 text_box_decrypt_text.place(x=580, y=250, width=400, height=200)
 #text_box_decrypt_text.insert(tk.END,"Aici textul decriptat") 
 
 #Textbox key
 label4 = tk.Label(window,text="Key:", font =("Arial Black",8))
 label4.place(x=140, y=330)
-text_key_text = tk.Text(window, font =("Times New Roman",12),foreground="purple")
+text_key_text = tk.Text(window, font =("Times New Roman",12),foreground="purple", relief="solid")
 text_key_text.place(x=140, y=350, width=280, height=100)
 
 #Combobox IP
