@@ -77,15 +77,15 @@ sendButton = tk.Button(window, text="Send data", background="red", foreground="w
 sendButton.place(x=450, y=405, width=95, height=45)
 
 #Button generate key
-keyButton = tk.Button(window, text="Generate key ->", command=select_key, background="white", foreground="red", font =("Times New Roman",10,"bold"), relief="groove")
-keyButton.place(x=20, y=375, width=100, height=45)
+keyButton = tk.Button(window, text="Generate \nkey ->", command=select_key, background="white", foreground="red", font =("Times New Roman",11,"bold"), relief="groove")
+keyButton.place(x=20, y=375, width=100, height=55)
 
 #Textboxs
 
 #Textbox plain text 
 label1 = tk.Label(window,text="Plain text:", font =("Arial Black",8))
 label1.place(x=20, y=0)
-text_box_plain_text = tk.Text(window, font =("Times New Roman",14),foreground="green", relief="solid")
+text_box_plain_text = tk.Text(window, font =("Times New Roman",14), relief="solid")
 text_box_plain_text.place(x=20, y=20, width=400, height=300)
 
 #Textbox cypher text 
@@ -105,7 +105,7 @@ text_box_decrypt_text.place(x=580, y=250, width=400, height=200)
 #Textbox key
 label4 = tk.Label(window,text="Key:", font =("Arial Black",8))
 label4.place(x=140, y=330)
-text_key_text = tk.Text(window, font =("Times New Roman",12),foreground="purple", relief="solid")
+text_key_text = tk.Text(window, font =("Times New Roman",12), relief="solid")
 text_key_text.place(x=140, y=350, width=280, height=100)
 
 #Combobox IP
