@@ -9,10 +9,10 @@ from rc6 import *
 if __name__ == "__main__":
     key = b'\x01\x23\x45\x67\x89\xab\xcd\xef\x01\x12\x23\x34\x45\x56\x67\x78'
     plaintext = b'\x02\x13\x24\x35\x46\x57\x68\x79\x8a\x9b\xac\xbd\xce\xdf\xe0\xf1'
-    key_schedule_result = key_schedule(key)
-    print("Key Schedule:")
-    for i, val in enumerate(key_schedule_result):
-        print("S[{}]: {:08X}".format(i, val))
+    # key_schedule_result = key_schedule(key)
+    # print("Key Schedule:")
+    # for i, val in enumerate(key_schedule_result):
+    #     print("S[{}]: {:08X}".format(i, val))
 
     rc6_class = rc6(key)
     print("Plaintext = ", end=' ')
@@ -23,12 +23,11 @@ if __name__ == "__main__":
     print("\nCyphertext = ", end=' ')
     for byte in ctext:
         print('{:02X}'.format(byte), end=' ')
+    print("\n")
 
     dtext= rc6_class.decrypt(ctext)
     print("\nDecrypt Text = ", end=' ')
     for byte in dtext:
         print('{:02X}'.format(byte), end=' ')
-        
-    print("\n")
 
 
