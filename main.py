@@ -18,6 +18,8 @@ if __name__ == "__main__":
     print("Plaintext = ", end=' ')
     for byte in plaintext:
         print('{:02X}'.format(byte), end=' ')
+    
+    print("\n")
 
     ctext = rc6_class.encrypt(plaintext)
     print("\nCyphertext = ", end=' ')
@@ -29,5 +31,7 @@ if __name__ == "__main__":
     print("\nDecrypt Text = ", end=' ')
     for byte in dtext:
         print('{:02X}'.format(byte), end=' ')
+    
+    print("\n")
 
 
