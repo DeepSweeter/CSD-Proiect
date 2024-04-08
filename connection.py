@@ -1,30 +1,29 @@
 import socket
 import threading
 
-SERVER = 1
-CLIENT = 0
+class server:
 
-
-class connection:
-
-    def __init__(self, con_type):
+    def __init__(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.con_type = con_type
+        self.sock.bind(socket.gethostbyname(), 110568)
+        self.start_thread = threading.Thread(target=self.start)
+        self.start_thread.start()
 
-    def start(self, host):
-        if self.con_type == SERVER:
-            self.sock.bind(socket.gethostbyname(),110568)
-            self.sock.listen(5)
-            server_thread = threading.Thread(target=self.sv_theading)
-            server_thread.start()
-        elif self.con_type == CLIENT:
-            self.sock.connect((host, 110568)) 
-    
-    def sv_threading(self):
-        while True:
-            (clientsocket, address) = self.sock.accept() 
-            ct = threading.Thread(target=self.client_thread,args=[clientsocket])
-            ct.start()
+    def start(self):
+        self.sock.listen(5)
+        while(True):
+            conn, addr = self.sock.accept()
+            client_threading = threading.Thread(target=self.process_client, args=(conn, addr))
+            client_threading.start()
 
-    def client_thread(clientsocket):
-        pass       
+    def process_client(self, conn, addr):
+        pass
+
+
+class client:
+
+    def __init__(self):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    def connect(self):
+        pass
