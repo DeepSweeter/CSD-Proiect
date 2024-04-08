@@ -27,15 +27,8 @@ def rightRotate(n, d):
     return ((n >> d)|(n << (w - d))) % MOD32
 
 #TODO Add the rest of the functions necessary for the algorithm
-
-def add_modulo_2w(a, b):
-    return (a + b) % MOD32
-
 def xor(a, b):
     return a ^ b
-
-def multiply_modulo_2w(a, b):
-    return (a * b) % MOD32
 
 def split_in_4registers(plain_text):
 
