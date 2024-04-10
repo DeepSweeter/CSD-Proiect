@@ -3,19 +3,22 @@ from tkinter import filedialog
 from tkinter import ttk
 import os
 from rc6 import *
+import socket
 
 dir_path = ".//Received Data"
 file_names = [i for i in os.listdir(dir_path) if i.endswith('.txt')]
-file_names.insert(0,"None")
+file_names.insert(0, "None")
+
 
 def open_file():
     l = filedialog.askopenfilename(filetypes=[("Text file", "*.txt")])
     if l:
         with open(l, "r") as file:
             text = file.read()
-        
+
         text_box_plain_text.delete("1.0", tk.END)
         text_box_plain_text.insert(tk.END, text)
+
 
 def select_key():
     key = ''
@@ -25,6 +28,7 @@ def select_key():
             key = file.read()
         text_key_text.delete("1.0", tk.END)
         text_key_text.insert(tk.END, key)
+
 
 def bencrypt():
     ctext = ''
@@ -40,6 +44,7 @@ def bencrypt():
 
     text_box_cypher_text.delete("1.0", tk.END)
     text_box_cypher_text.insert(tk.END, x)
+
 
 def bdecrypt():
     dtext = ''
@@ -76,6 +81,7 @@ def update_textBoxCT(event):
     text_key_text.delete('1.0', tk.END)
     text_key_text.insert(tk.END, key)
 
+
 def clearAll():
     text_box_plain_text.delete("1.0", tk.END)
     text_box_cypher_text.delete("1.0", tk.END)
@@ -83,70 +89,74 @@ def clearAll():
     text_key_text.delete("1.0", tk.END)
     return
 
+
 window = tk.Tk()
-window.geometry("1000x480")
+window.geometry("1000x510")
 window.title("RC6 network aplication")
 window.resizable(False, False)
 
-#Buttons
+# Buttons
 
-#Button open
-openButton = tk.Button(window, text="<- Open File", command=open_file, background="white", foreground="red", font=("Times New Roman", 11, "bold"), relief="groove")
+# Button open
+openButton = tk.Button(window, text="<- Open File", command=open_file, background="white", foreground="red",
+                       font=("Times New Roman", 11, "bold"), relief="groove")
 openButton.place(x=450, y=20, width=95, height=45)
 
-#Button crypt
-cryptButton = tk.Button(window, text="Encrypt ->", command=bencrypt, background="white", foreground="darkblue", font=("Times New Roman", 11, "bold"), relief="groove")
+# Button crypt
+cryptButton = tk.Button(window, text="Encrypt ->", command=bencrypt, background="white", foreground="darkblue",
+                        font=("Times New Roman", 11, "bold"), relief="groove")
 cryptButton.place(x=450, y=90, width=95, height=45)
 
-#Button decrypt
-decryptButton = tk.Button(window, text="Decrypt ->", command=bdecrypt, background="white", foreground="darkblue", font=("Times New Roman", 11, "bold"), relief="groove")
+# Button decrypt
+decryptButton = tk.Button(window, text="Decrypt ->", command=bdecrypt, background="white", foreground="darkblue",
+                          font=("Times New Roman", 11, "bold"), relief="groove")
 decryptButton.place(x=450, y=250, width=95, height=45)
 
-#Button send packet
-sendButton = tk.Button(window, text="Send data", background="red", foreground="white", font=("Times New Roman", 11, "bold"), relief="groove")
+# Button send packet
+sendButton = tk.Button(window, text="Send data", background="red", foreground="white",
+                       font=("Times New Roman", 11, "bold"), relief="groove")
 sendButton.place(x=450, y=405, width=95, height=45)
 
-#Button generate key
-keyButton = tk.Button(window, text="Generate \nkey ->", command=select_key, background="white", foreground="red", font=("Times New Roman", 11, "bold"), relief="groove")
-keyButton.place(x=20, y=350, width=100, height=55)
+# Button generate key
+keyButton = tk.Button(window, text="Generate \nkey ->", command=select_key, background="white", foreground="red",
+                      font=("Times New Roman", 11, "bold"), relief="groove")
+keyButton.place(x=20, y=370, width=100, height=50)
 
-#Button clear textBoxs
-clearButton = tk.Button(window, text="Clear all", command=clearAll, background="white", foreground="blue", font=("Times New Roman", 9, "bold"), relief="groove")
-clearButton.place(x=30, y=425, width=80, height=25)
+# Button clear textBoxs
+clearButton = tk.Button(window, text="Clear all", command=clearAll, background="white", foreground="blue",
+                        font=("Times New Roman", 9, "bold"), relief="groove")
+clearButton.place(x=210, y=465, width=100, height=25)
 
-#Textboxs
+# Textboxs
 
-#Textbox plain text 
-label1 = tk.Label(window, text="Plain text:", font =("Arial Black", 8))
+# Textbox plain text
+label1 = tk.Label(window, text="Plain text:", font=("Arial Black", 8))
 label1.place(x=20, y=0)
 text_box_plain_text = tk.Text(window, font=("Times New Roman", 14), relief="solid")
 text_box_plain_text.place(x=20, y=20, width=400, height=300)
 
-#Textbox cypher text 
-label2 = tk.Label(window, text="Cypher text:", font =("Arial Black", 8))
+# Textbox cypher text
+label2 = tk.Label(window, text="Cypher text:", font=("Arial Black", 8))
 label2.place(x=580, y=0)
 text_box_cypher_text = tk.Text(window, font=("Times New Roman", 14), foreground="darkred", relief="solid")
 text_box_cypher_text.place(x=580, y=20, width=400, height=200)
-#text_box_cypher_text.insert(tk.END,"Aici textul criptat") 
 
-#Textbox decrypt text 
-label3 = tk.Label(window, text="Decrypt text:", font =("Arial Black", 8))
+# Textbox decrypt text
+label3 = tk.Label(window, text="Decrypt text:", font=("Arial Black", 8))
 label3.place(x=580, y=230)
 text_box_decrypt_text = tk.Text(window, font=("Times New Roman", 14), foreground="darkgreen", relief="solid")
 text_box_decrypt_text.place(x=580, y=250, width=400, height=200)
-#text_box_decrypt_text.insert(tk.END,"Aici textul decriptat") 
 
-#Textbox key
+# Textbox key
 label4 = tk.Label(window, text="Key:", font=("Arial Black", 8))
 label4.place(x=140, y=330)
-text_key_text = tk.Text(window, font =("Times New Roman", 12), relief="solid")
+text_key_text = tk.Text(window, font=("Times New Roman", 12), relief="solid")
 text_key_text.place(x=140, y=350, width=280, height=100)
 
-#Combobox IP
+# Combobox IP
 label5 = tk.Label(window, text="Select IP:", font=("Arial Black", 8))
 label5.place(x=440, y=330)
 comboboxIP = ttk.Combobox(window, font=("Times New Roman", 11, "bold"), foreground="darkgreen")
-comboboxIP['state'] = 'readonly'
 comboboxIP['values'] = ('192.168.1.1', '192.168.1.2', '192.168.1.3')
 comboboxIP.current(0)
 comboboxIP.place(x=440, y=350, width=115, height=30)
@@ -160,5 +170,23 @@ comboboxRM['values'] = file_names
 comboboxRM.current(0)
 comboboxRM.bind("<<ComboboxSelected>>", update_textBoxCT)
 comboboxRM.place(x=440, y=175, width=115, height=30)
+
+# My IP
+ip = socket.gethostbyname(socket.gethostname())
+label7 = tk.Label(window, text="My IP: ", font=("Arial Black", 9))
+label7.place(x=580, y=465)
+text_box_myip = tk.Text(window, font=("Times New Roman", 12), relief="flat")
+text_box_myip.place(x=630, y=465, width=120, height=20)
+text_box_myip.insert(tk.END, ip)
+text_box_myip.config(state="disable")
+
+# Domain name
+dName = socket.gethostname()
+label8 = tk.Label(window, text="Name : ", font=("Arial Black", 9))
+label8.place(x=770, y=465)
+text_box_DN = tk.Text(window, font=("Times New Roman", 12), relief="flat")
+text_box_DN.place(x=830, y=465, width=120, height=27)
+text_box_DN.insert(tk.END, dName)
+text_box_DN.config(state="disable")
 
 window.mainloop()
