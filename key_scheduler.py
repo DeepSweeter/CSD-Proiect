@@ -1,7 +1,5 @@
 from functions import *
 
-
-# TODO Check if this function works properly
 def key_schedule(key):
     b = len(key)
     c = b // 4

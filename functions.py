@@ -42,10 +42,6 @@ def rightRotate(n, d):
     d %= w
     return ((n >> d)|(n << (w - d))) % MOD32
 
-#TODO Add the rest of the functions necessary for the algorithm
-def xor(a, b):
-    return a ^ b
-
 def split_in_4registers(plain_text):
 
     #plain_bytes = plain_text.encode()
@@ -64,3 +60,13 @@ def split_in_4registers(plain_text):
 
 def xor_bytes(a, b):
     return bytes(x ^ y for x, y in zip(a, b))
+
+def pad_to_128_bits(plain_text):
+    cnt0 = 0
+    while len(plain_text) % 16 != 0:
+        plain_text += b'0'
+        cnt0 += 1
+    return plain_text, cnt0
+
+def split_in_pack_1376B(cypher_text):
+    return [cypher_text[k:k + 1376] for k in range(0, len(cypher_text), 1376)]
