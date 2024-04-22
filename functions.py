@@ -30,7 +30,7 @@ G = 0x678471b2_7a9cf44e_e91a49c5_147db1a9_aaf244f0_5a434d64_86931d2d_14271b9e_35
 
 #Debugging
 
-server_address = "localhost" #socket.gethostbyname()
+server_address = "127.0.0.5" #socket.gethostbyname()
 
 #Functions
 
@@ -60,3 +60,7 @@ def split_in_4registers(plain_text):
 
 
     return A, B, C, D
+
+
+def xor_bytes(a, b):
+    return bytes(x ^ y for x, y in zip(a, b))
