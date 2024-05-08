@@ -5,7 +5,7 @@ import os
 from rc6 import *
 import socket
 
-dir_path = ".//Received Data"
+dir_path = "./Received Data"
 file_names = [i for i in os.listdir(dir_path) if i.endswith('.txt')]
 file_names.insert(0, "None")
 
@@ -23,7 +23,7 @@ class mainPanel:
                                font=("Times New Roman", 11, "bold"), relief="groove")
         self.openButton.place(x=450, y=20, width=95, height=45)
 
-        # Button crypt
+        # Button encrypt
         self.cryptButton = tk.Button(self.window, text="Encrypt ->", command=self.bencrypt, background="white", foreground="darkblue",
                                 font=("Times New Roman", 11, "bold"), relief="groove")
         self.cryptButton.place(x=450, y=90, width=95, height=45)

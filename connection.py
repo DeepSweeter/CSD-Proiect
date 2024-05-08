@@ -5,6 +5,7 @@ from functions import P,G
 import random
 import struct
 from threading import Lock
+from rc6 import encrypt_variable_length, decrypt_variable_length
 
 mutex = Lock()
 #Dictionary to store {addr, [common_key, type]} values
@@ -38,16 +39,11 @@ class server:
 
         #Process Diffie-Hellman first
         public_key = DiffieHellman.calculate_public_key(self.private_key)
-        print("Server pb: " + str(public_key))
 
         conn.sendall(str(public_key).encode())
         client_public_key = int(conn.recv(1024).decode())
-        print("Server cpb: " + str(public_key))
 
         shared_key = DiffieHellman.calculate_shared_secret_key(self.private_key, client_public_key)
-
-        print("Server sk: " + str(public_key))
-
 
         #Add the shared_key into the dictionary
         mutex.acquire()
@@ -55,9 +51,26 @@ class server:
         mutex.release()
 
         #Listen for each client connected
-
-        #while(1):
-            #conn.recv();
+        nr0 = 0
+        text = []
+        while True:
+            data = conn.recv(1500)
+            data = data.decode()
+            splitted = data.split(" ")
+            header = splitted[0]
+            msg = splitted[1]
+            if header == "nr0":
+                nr0 = int(msg)
+            elif header == "cypher":
+                text.append(msg)
+            elif header == "end":
+                pass
+                #Process text
+                to_decrypt = b''.join(text)
+                #Decrypt
+                decrypted = decrypt_variable_length(to_decrypt, connections[addr][0], nr0)
+                #Put into file
+                print(decrypted)
 
 
         
@@ -79,11 +92,37 @@ class client:
         shared_key = DiffieHellman.calculate_shared_secret_key(self.private_key, server_public_key)
         print("Client sk: " + str(shared_key))
 
+        #Launch receive_file thread
+        recv_thread = threading.Thread(target=self.receive_file, args=(addr))
+        recv_thread.start()
+
         return shared_key
     
     #Listen for messages
-    def receive_file(self):
-        pass
+    def receive_file(self, addr):
+        nr0 = 0
+        text = []
+        while True:
+            data = self.sock.recv(1500)
+            data = data.decode()
+            splitted = data.split(" ")
+            header = splitted[0]
+            msg = splitted[1]
+            if header == "nr0":
+                nr0 = int(msg)
+            elif header == "cypher":
+                text.append(msg)
+            elif header == "end":
+                pass
+                #Process text
+                to_decrypt = b''.join(text)
+                #Decrypt
+                decrypted = decrypt_variable_length(to_decrypt, connections[addr][0], nr0)
+                #Put into file
+                print(decrypted)
+
+
+
 
 class connection_handler:
 
@@ -93,6 +132,7 @@ class connection_handler:
         print("Private Key: " + str(self.private_key))
         self.client = client(self.private_key)
         self.server = server(server_addr ,self.private_key, self.num_bits)
+        self.private_key_bytes = self.private_key.to_bytes((self.private_key.bit_length() + 7)//8, 'big')
 
 
     def connect(self, addr):
@@ -107,19 +147,39 @@ class connection_handler:
         num_bits = (num_bits // 8) * 8
         private_key_int = random.getrandbits(num_bits)
         return private_key_int, num_bits
-
-        #self.private_key = private_key_int.to_bytes(num_bits//8, 'big')
     
-    def send_file(addr, file_name):
+    def send_file(self, addr, file_name):
         #Open file and read it
-
+        #For now is file_name is hardcoded
+        file_name= "Files/fisier_test.txt"
         #Encrypt data
+        with open(file_name, 'r') as file:
+            text = file.read()
+
+        encrypted, nr0 = encrypt_variable_length(text, connections[addr][0])
+        en_splited = functions.split_in_pack_1376B(encrypted)
+
+        header0 = "nr0 " + nr0
+        header1 = "end 0"
 
         #While there is still encrypted data, send data
             #For each 1376 blocks of data sendall
+        if(connections[addr][1] == 'client'):
+            self.client.sock.sendall(header0.encode())
+            for pack in en_splited:
+                header = "cypher " + pack
+                self.client.sock.sendall(header.encode())
+            self.client.sock.sendall(header1.encode())
+            
+        elif(connections[addr][1] == 'server'):
+            self.server.clients[addr].sendall(header0.encode())
+            for pack in en_splited:
+                header = "cypher " + pack
+                self.server.clients[addr].sendall(header.encode())
+            self.server.clients[addr].sendall(header1.encode())        
+
         
-        #Finish transmission
-        pass
+
 
 
 
@@ -148,9 +208,15 @@ if __name__ == '__main__':
         ch = connection_handler('127.0.0.6')
         ch.connect('localhost')
         print("Shared Key = :" + str(connections["localhost"][0]))
-        exit()
     elif(type_cmd == '2'):
         ch = connection_handler('localhost')
         input("Enter to stop waiting")
         print("Shared Key = :" + str(next(iter(connections.values()))[0]))
-        exit()
+
+    while True:
+        try:
+            pass
+        except KeyboardInterrupt:
+            ch.client.sock.close()
+            ch.server.sock.close()
+
