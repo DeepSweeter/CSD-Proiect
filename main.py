@@ -55,7 +55,7 @@ if __name__ == "__main__":
             trustFlag = 0
 
     if trustFlag:
-        print("\nCripatare si decriptare efectiuate cu succes!!!\n")
+        print("\nCripatare si decriptare efectuate cu succes!!!\n")
     else:
         print("\nEroare la functiile de criptare si/sau decriptare!!!\n")
 
