@@ -56,22 +56,28 @@ class server:
         while True:
             data = conn.recv(1500)
             data = data.decode()
+            print(data)
             splitted = data.split(" ")
             header = splitted[0]
+            print("Header = " + header)
             msg = splitted[1]
+            print("Msg = " + msg + "\n\n")
             if header == "nr0":
                 nr0 = int(msg)
             elif header == "cypher":
                 text.append(msg)
             elif header == "end":
-                pass
                 #Process text
-                to_decrypt = b''.join(text)
+                to_decrypt = bytes.fromhex(''.join(text))
+                #(''.join(text)).encode
                 #Decrypt
                 decrypted = decrypt_variable_length(to_decrypt, connections[addr][0], nr0)
                 #Put into file
                 print(decrypted)
 
+                file_name = "./Received Data/" + addr + ".txt"
+                with open(file_name, 'w') as file:
+                    file.write(decrypted)
 
         
 
@@ -93,7 +99,7 @@ class client:
         print("Client sk: " + str(shared_key))
 
         #Launch receive_file thread
-        recv_thread = threading.Thread(target=self.receive_file, args=(addr))
+        recv_thread = threading.Thread(target=self.receive_file, args=(addr,))
         recv_thread.start()
 
         return shared_key
@@ -113,13 +119,16 @@ class client:
             elif header == "cypher":
                 text.append(msg)
             elif header == "end":
-                pass
                 #Process text
-                to_decrypt = b''.join(text)
+                to_decrypt = bytes.fromhex(''.join(text))
+                print(to_decrypt)
                 #Decrypt
                 decrypted = decrypt_variable_length(to_decrypt, connections[addr][0], nr0)
                 #Put into file
                 print(decrypted)
+                file_name = "./Received Data/" + addr + ".txt"
+                with open(file_name, 'w') as file:
+                    file.write(decrypted)
 
 
 
@@ -151,15 +160,15 @@ class connection_handler:
     def send_file(self, addr, file_name):
         #Open file and read it
         #For now is file_name is hardcoded
-        file_name= "Files/fisier_test.txt"
+        #file_name= "Files/fisier_test.txt"
         #Encrypt data
         with open(file_name, 'r') as file:
             text = file.read()
 
-        encrypted, nr0 = encrypt_variable_length(text, connections[addr][0])
+        encrypted, nr0 = encrypt_variable_length(text.encode(), connections[addr][0])
         en_splited = functions.split_in_pack_1376B(encrypted)
 
-        header0 = "nr0 " + nr0
+        header0 = "nr0 " + str(nr0)
         header1 = "end 0"
 
         #While there is still encrypted data, send data
@@ -167,16 +176,17 @@ class connection_handler:
         if(connections[addr][1] == 'client'):
             self.client.sock.sendall(header0.encode())
             for pack in en_splited:
-                header = "cypher " + pack
-                self.client.sock.sendall(header.encode())
-            self.client.sock.sendall(header1.encode())
+                header = "cypher ".encode() + str(pack).encode()
+                self.client.sock.send(header)
+                #insert manual time delay
+            self.client.sock.send(header1.encode())
             
         elif(connections[addr][1] == 'server'):
             self.server.clients[addr].sendall(header0.encode())
             for pack in en_splited:
-                header = "cypher " + pack
-                self.server.clients[addr].sendall(header.encode())
-            self.server.clients[addr].sendall(header1.encode())        
+                header = "cypher ".encode() + str(pack).encode()
+                self.server.clients[addr].send(header)
+            self.server.clients[addr].send(header1.encode())        
 
         
 

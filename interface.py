@@ -4,6 +4,7 @@ from tkinter import ttk
 import os
 from rc6 import *
 import socket
+from connection import connection_handler
 
 dir_path = "./Received Data"
 file_names = [i for i in os.listdir(dir_path) if i.endswith('.txt')]
@@ -15,6 +16,9 @@ class mainPanel:
         self.window.geometry("1000x510")
         self.window.title("RC6 network aplication")
         self.window.resizable(False, False)
+
+        # Connection handler
+        self.ch = connection_handler("127.0.0.5")
 
         # Buttons
 
@@ -34,14 +38,10 @@ class mainPanel:
         self.decryptButton.place(x=450, y=250, width=95, height=45)
 
         # Button send packet
-        self.sendButton = tk.Button(self.window, text="Send data", background="red", foreground="white",
+        self.sendButton = tk.Button(self.window, text="Send data", background="red", foreground="white", command = self.sendFileAction,
                                font=("Times New Roman", 11, "bold"), relief="groove")
         self.sendButton.place(x=450, y=405, width=95, height=45)
 
-        # Button generate key
-        self.keyButton = tk.Button(self.window, text="Generate \nkey ->", command=self.select_key, background="white", foreground="red",
-                              font=("Times New Roman", 11, "bold"), relief="groove")
-        self.keyButton.place(x=20, y=370, width=100, height=50)
 
         # Button clear textBoxs
         self.clearButton = tk.Button(self.window, text="Clear all", command=self.clearAll, background="white", foreground="blue",
@@ -70,9 +70,10 @@ class mainPanel:
 
         # Textbox key
         self.label4 = tk.Label(self.window, text="Key:", font=("Arial Black", 8))
-        self.label4.place(x=140, y=330)
+        self.label4.place(x=20, y=330)
         self.text_key_text = tk.Text(self.window, font=("Times New Roman", 12), relief="solid")
-        self.text_key_text.place(x=140, y=350, width=280, height=100)
+        self.text_key_text.place(x=20, y=350, width=400, height=100)
+        self.text_key_text.insert(tk.END, str(self.ch.private_key_bytes))
 
         # Combobox IP
         self.label5 = tk.Label(self.window, text="Select IP:", font=("Arial Black", 8))
@@ -110,23 +111,18 @@ class mainPanel:
         self.text_box_DN.insert(tk.END, dName)
         self.text_box_DN.config(state="disable")
 
+        # Text file name
+        self.text_file_name = ""
+
     def open_file(self):
-        l = filedialog.askopenfilename(filetypes=[("Text file", "*.txt")])
-        if l:
-            with open(l, "r") as file:
+        self.text_file_name = filedialog.askopenfilename(filetypes=[("Text file", "*.txt")])
+        if self.text_file_name:
+            with open(self.text_file_name, "r") as file:
                 text = file.read()
 
             self.text_box_plain_text.delete("1.0", tk.END)
             self.text_box_plain_text.insert(tk.END, text)
 
-    def select_key(self):
-        key = ''
-        k = filedialog.askopenfilename(filetypes=[("Text file", ".*txt")])
-        if k:
-            with open(k, "r") as file:
-                key = file.read()
-            self.text_key_text.delete("1.0", tk.END)
-            self.text_key_text.insert(tk.END, key)
 
     def bencrypt(self):
         ctext = ''
@@ -183,6 +179,11 @@ class mainPanel:
         self.text_box_decrypt_text.delete("1.0", tk.END)
         self.text_key_text.delete("1.0", tk.END)
         return
+    
+    def sendFileAction(self):
+        print(self.comboboxIP.get())
+        self.ch.connect(self.comboboxIP.get())
+        self.ch.send_file(self.comboboxIP.get(), self.text_file_name)
 
 mp = mainPanel()
 mp.window.mainloop()
