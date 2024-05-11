@@ -17,6 +17,8 @@ class mainPanel:
         self.window.title("RC6 network aplication")
         self.window.resizable(False, False)
 
+        self.window.protocol("WM_DELETE_WINDOW", self.onClose)
+
         # Connection handler
         self.ch = connection_handler("127.0.0.5")
 
@@ -79,7 +81,7 @@ class mainPanel:
         self.label5 = tk.Label(self.window, text="Select IP:", font=("Arial Black", 8))
         self.label5.place(x=440, y=330)
         self.comboboxIP = ttk.Combobox(self.window, font=("Times New Roman", 11, "bold"), foreground="darkgreen")
-        self.comboboxIP['values'] = ('192.168.1.1', '192.168.1.2', '192.168.1.3')
+        self.comboboxIP['values'] = ('127.0.0.1', '192.168.1.2', '192.168.1.3')
         self.comboboxIP.current(0)
         self.comboboxIP.place(x=440, y=350, width=115, height=30)
 
@@ -184,6 +186,13 @@ class mainPanel:
         print(self.comboboxIP.get())
         self.ch.connect(self.comboboxIP.get())
         self.ch.send_file(self.comboboxIP.get(), self.text_file_name)
+
+    def onClose(self):
+        self.ch.client.sock.close()
+        for s_client in self.ch.server.clients.values():
+            print(s_client)
+            s_client.close()
+        self.ch.server.sock.close()
 
 mp = mainPanel()
 mp.window.mainloop()

@@ -69,6 +69,7 @@ def decrypt_variable_length(cipher_text, key, nr0):
     fragment = [cipher_text[k:k + 16] for k in range(0, len(cipher_text), 16)]
     decrypted_fragments = []
     for i in range(len(fragment)):
+        print(str(fragment[i]) + " : " + str(len(fragment[i])))
         decrypted_block = obj.decrypt(fragment[i])
         if i != 0:
             decrypted_block = xor_bytes(decrypted_block, fragment[i - 1])

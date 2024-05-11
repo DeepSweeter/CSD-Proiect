@@ -2,6 +2,7 @@ import socket
 import threading
 import functions
 from functions import P,G
+import time
 import random
 import struct
 from threading import Lock
@@ -10,7 +11,7 @@ from rc6 import encrypt_variable_length, decrypt_variable_length
 mutex = Lock()
 #Dictionary to store {addr, [common_key, type]} values
 connections = {}
-
+EOT = ' end_of_transmission '
 class server:
 
     def __init__(self, server_addr ,pk, nb):
@@ -29,7 +30,7 @@ class server:
             conn, addr = self.sock.accept()
             if addr in connections:
                 continue
-            client_threading = threading.Thread(target=self.process_client, args=(conn, addr))
+            client_threading = threading.Thread(target=self.process_client, args=(conn, addr[0]))
             client_threading.start()
 
     def process_client(self, conn, addr):
@@ -52,32 +53,47 @@ class server:
 
         #Listen for each client connected
         nr0 = 0
-        text = []
         while True:
-            data = conn.recv(1500)
+            data = b''
+
+            data = conn.recv(16)
+            print("Data = " + str(data))
             data = data.decode()
-            print(data)
             splitted = data.split(" ")
             header = splitted[0]
-            print("Header = " + header)
-            msg = splitted[1]
-            print("Msg = " + msg + "\n\n")
+            nr0 = int(splitted[1])
+            msg_len = int(splitted[2])
             if header == "nr0":
-                nr0 = int(msg)
-            elif header == "cypher":
-                text.append(msg)
-            elif header == "end":
-                #Process text
-                to_decrypt = bytes.fromhex(''.join(text))
-                #(''.join(text)).encode
+                #process the rest of the message
+                eot_flag = False
+                full_msg = b''
+                
+                while len(full_msg) < msg_len:
+                    print("Msg_curren_len = " + str(len(full_msg)))
+                    new_data = conn.recv(msg_len)
+                    full_msg += new_data
+                    #Process text
+                    # if not new_data:
+                    #     break
+
+                while not eot_flag:
+                    eot_data = conn.recv(1024).decode()
+                    print("Eot data recv = " + eot_data)
+                    if eot_data.find(EOT) != -1:
+                        eot_flag = True
+
+                    
+                to_decrypt = full_msg
+                            
+                print("to_decrypt" + str(to_decrypt))
                 #Decrypt
                 decrypted = decrypt_variable_length(to_decrypt, connections[addr][0], nr0)
                 #Put into file
-                print(decrypted)
-
+                print("Decrypted = " + decrypted.decode())
                 file_name = "./Received Data/" + addr + ".txt"
                 with open(file_name, 'w') as file:
-                    file.write(decrypted)
+                    file.write(decrypted.decode())
+                eot_flag = True
 
         
 
@@ -106,29 +122,50 @@ class client:
     
     #Listen for messages
     def receive_file(self, addr):
+        
         nr0 = 0
-        text = []
         while True:
-            data = self.sock.recv(1500)
+            data = b''
+            while len(data) < 10:
+                data += self.sock.recv(10)
+                print("Data = " + str(data))
             data = data.decode()
             splitted = data.split(" ")
             header = splitted[0]
-            msg = splitted[1]
+            nr0 = int(splitted[1])
+            msg_len = int(splitted[2])
             if header == "nr0":
-                nr0 = int(msg)
-            elif header == "cypher":
-                text.append(msg)
-            elif header == "end":
-                #Process text
-                to_decrypt = bytes.fromhex(''.join(text))
-                print(to_decrypt)
+                #process the rest of the message
+                eot_flag = False
+                full_msg = b''
+                
+                while len(full_msg) < msg_len:
+                    print("Msg_curren_len = " + str(len(full_msg)))
+                    new_data = self.sock.recv(msg_len)
+                    full_msg += new_data
+                    #Process text
+                    # if not new_data:
+                    #     break
+
+                while not eot_flag:
+                    eot_data = self.sock.recv(1024).decode()
+                    print("Eot data recv = " + eot_data)
+                    if eot_data.find(EOT) != -1:
+                        eot_flag = True
+
+                    
+                to_decrypt = full_msg
+                            
+                print("to_decrypt" + str(to_decrypt))
                 #Decrypt
                 decrypted = decrypt_variable_length(to_decrypt, connections[addr][0], nr0)
                 #Put into file
-                print(decrypted)
+                print("Decrypted = " + decrypted.decode())
                 file_name = "./Received Data/" + addr + ".txt"
                 with open(file_name, 'w') as file:
-                    file.write(decrypted)
+                    file.write(decrypted.decode())
+                eot_flag = True
+                
 
 
 
@@ -168,25 +205,29 @@ class connection_handler:
         encrypted, nr0 = encrypt_variable_length(text.encode(), connections[addr][0])
         en_splited = functions.split_in_pack_1376B(encrypted)
 
-        header0 = "nr0 " + str(nr0)
-        header1 = "end 0"
+        header_nr0 = "nr0 " + str(nr0) + " " + str(len(encrypted))
+        header_eot = EOT
 
         #While there is still encrypted data, send data
             #For each 1376 blocks of data sendall
         if(connections[addr][1] == 'client'):
-            self.client.sock.sendall(header0.encode())
+            self.client.sock.sendall(header_nr0.encode())
+            #self.client.sock.sendall(header_cypher.encode())
             for pack in en_splited:
-                header = "cypher ".encode() + str(pack).encode()
-                self.client.sock.send(header)
-                #insert manual time delay
-            self.client.sock.send(header1.encode())
+                data = str(pack).encode()
+                time.sleep(0.001)
+                self.client.sock.sendall(pack)
+            self.client.sock.sendall(header_eot.encode())
             
         elif(connections[addr][1] == 'server'):
-            self.server.clients[addr].sendall(header0.encode())
+            self.server.clients[addr].sendall(header_nr0.encode())
+            #self.server.clients[addr].sendall(header_cypher.encode())
             for pack in en_splited:
-                header = "cypher ".encode() + str(pack).encode()
-                self.server.clients[addr].send(header)
-            self.server.clients[addr].send(header1.encode())        
+                data = str(pack).encode()
+                time.sleep(0.001)
+                self.server.clients[addr].sendall(pack)
+                
+            self.server.clients[addr].sendall(header_eot.encode())        
 
         
 
