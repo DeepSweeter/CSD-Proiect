@@ -23,77 +23,88 @@ class server:
         self.sock.bind((server_addr, 6767))
         self.start_thread = threading.Thread(target=self.start)
         self.start_thread.start()
+        self.shutdown = False
 
     def start(self):
         self.sock.listen(5)
         while(True):
             conn, addr = self.sock.accept()
-            if addr in connections:
+            print("Client addr = " + addr[0])
+            if addr[0] in connections:
                 continue
             client_threading = threading.Thread(target=self.process_client, args=(conn, addr[0]))
             client_threading.start()
 
     def process_client(self, conn, addr):
-        mutex.acquire()
-        self.clients[addr] = conn
-        mutex.release()
+        try:
+            mutex.acquire()
+            self.clients[addr] = conn
+            mutex.release()
 
-        #Process Diffie-Hellman first
-        public_key = DiffieHellman.calculate_public_key(self.private_key)
+            #Process Diffie-Hellman first
+            public_key = DiffieHellman.calculate_public_key(self.private_key)
 
-        conn.sendall(str(public_key).encode())
-        client_public_key = int(conn.recv(1024).decode())
+            conn.sendall(str(public_key).encode())
+            client_public_key = int(conn.recv(1024).decode())
 
-        shared_key = DiffieHellman.calculate_shared_secret_key(self.private_key, client_public_key)
+            shared_key = DiffieHellman.calculate_shared_secret_key(self.private_key, client_public_key)
 
-        #Add the shared_key into the dictionary
-        mutex.acquire()
-        connections[addr] = (shared_key.to_bytes(64, 'big'), 'server')
-        mutex.release()
+            #Add the shared_key into the dictionary
+            mutex.acquire()
+            connections[addr] = (shared_key.to_bytes(64, 'big'), 'server')
+            mutex.release()
 
-        #Listen for each client connected
-        nr0 = 0
-        while True:
-            data = b''
+            #Listen for each client connected
+            nr0 = 0
+            while not self.shutdown:
+                data = b''
 
-            data = conn.recv(16)
-            print("Data = " + str(data))
-            data = data.decode()
-            splitted = data.split(" ")
-            header = splitted[0]
-            nr0 = int(splitted[1])
-            msg_len = int(splitted[2])
-            if header == "nr0":
-                #process the rest of the message
-                eot_flag = False
-                full_msg = b''
-                
-                while len(full_msg) < msg_len:
-                    print("Msg_curren_len = " + str(len(full_msg)))
-                    new_data = conn.recv(msg_len)
-                    full_msg += new_data
-                    #Process text
-                    # if not new_data:
-                    #     break
-
-                while not eot_flag:
-                    eot_data = conn.recv(1024).decode()
-                    print("Eot data recv = " + eot_data)
-                    if eot_data.find(EOT) != -1:
-                        eot_flag = True
-
+                data = conn.recv(16)
+                if not data:
+                    continue
+                print("Data = " + str(data))
+                data = data.decode()
+                splitted = data.split(" ")
+                header = splitted[0]
+                nr0 = int(splitted[1])
+                msg_len = int(splitted[2])
+                if header == "nr0":
+                    #process the rest of the message
+                    eot_flag = False
+                    full_msg = b''
                     
-                to_decrypt = full_msg
-                            
-                print("to_decrypt" + str(to_decrypt))
-                #Decrypt
-                decrypted = decrypt_variable_length(to_decrypt, connections[addr][0], nr0)
-                #Put into file
-                print("Decrypted = " + decrypted.decode())
-                file_name = "./Received Data/" + addr + ".txt"
-                with open(file_name, 'w') as file:
-                    file.write(decrypted.decode())
-                eot_flag = True
+                    while len(full_msg) < msg_len:
+                        print("Msg_curren_len = " + str(len(full_msg)))
+                        new_data = conn.recv(msg_len)
+                        full_msg += new_data
+                        if self.shutdown:
+                            break
+
+
+                    while not eot_flag:
+                        eot_data = conn.recv(1024).decode()
+                        print("Eot data recv = " + eot_data)
+                        if eot_data.find(EOT) != -1:
+                            eot_flag = True
+                        if self.shutdown:
+                            break
+
+                        
+                    to_decrypt = full_msg
+                                
+                    print("to_decrypt" + str(to_decrypt))
+                    #Decrypt
+                    decrypted = decrypt_variable_length(to_decrypt, connections[addr][0], nr0)
+                    #Put into file
+                    print("Decrypted = " + decrypted.decode())
+                    file_name = "./Received Data/" + addr + ".txt"
+                    with open(file_name, 'w') as file:
+                        file.write(decrypted.decode())
+                    eot_flag = True
+
+        except KeyboardInterrupt:
+            print("Ended process")
+
 
         
 
@@ -103,6 +114,7 @@ class client:
     def __init__(self, pk):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.private_key = pk
+        self.shutdown = False
 
     def connect(self, addr):
         self.sock.connect((addr, 6767))
@@ -122,50 +134,58 @@ class client:
     
     #Listen for messages
     def receive_file(self, addr):
+        try:
         
-        nr0 = 0
-        while True:
-            data = b''
-            while len(data) < 10:
-                data += self.sock.recv(10)
+            nr0 = 0
+            while not self.shutdown:
+                data = b''
+
+                data = self.sock.recv(16)
+                if not data:
+                    continue
                 print("Data = " + str(data))
-            data = data.decode()
-            splitted = data.split(" ")
-            header = splitted[0]
-            nr0 = int(splitted[1])
-            msg_len = int(splitted[2])
-            if header == "nr0":
-                #process the rest of the message
-                eot_flag = False
-                full_msg = b''
-                
-                while len(full_msg) < msg_len:
-                    print("Msg_curren_len = " + str(len(full_msg)))
-                    new_data = self.sock.recv(msg_len)
-                    full_msg += new_data
-                    #Process text
-                    # if not new_data:
-                    #     break
-
-                while not eot_flag:
-                    eot_data = self.sock.recv(1024).decode()
-                    print("Eot data recv = " + eot_data)
-                    if eot_data.find(EOT) != -1:
-                        eot_flag = True
-
+                data = data.decode()
+                splitted = data.split(" ")
+                header = splitted[0]
+                nr0 = int(splitted[1])
+                msg_len = int(splitted[2])
+                if header == "nr0":
+                    #process the rest of the message
+                    eot_flag = False
+                    full_msg = b''
                     
-                to_decrypt = full_msg
-                            
-                print("to_decrypt" + str(to_decrypt))
-                #Decrypt
-                decrypted = decrypt_variable_length(to_decrypt, connections[addr][0], nr0)
-                #Put into file
-                print("Decrypted = " + decrypted.decode())
-                file_name = "./Received Data/" + addr + ".txt"
-                with open(file_name, 'w') as file:
-                    file.write(decrypted.decode())
-                eot_flag = True
-                
+                    while len(full_msg) < msg_len:
+                        print("Msg_curren_len = " + str(len(full_msg)))
+                        new_data = self.sock.recv(msg_len)
+                        full_msg += new_data
+                        if self.shutdown:
+                            break
+                        #Process text
+                        # if not new_data:
+                        #     break
+
+                    while not eot_flag:
+                        eot_data = self.sock.recv(1024).decode()
+                        print("Eot data recv = " + eot_data)
+                        if eot_data.find(EOT) != -1:
+                            eot_flag = True
+                        if self.shutdown:
+                            break
+
+                        
+                    to_decrypt = full_msg
+                                
+                    print("to_decrypt" + str(to_decrypt))
+                    #Decrypt
+                    decrypted = decrypt_variable_length(to_decrypt, connections[addr][0], nr0)
+                    #Put into file
+                    print("Decrypted = " + decrypted.decode())
+                    file_name = "./Received Data/" + addr + ".txt"
+                    with open(file_name, 'w') as file:
+                        file.write(decrypted.decode())
+                    eot_flag = True
+        except KeyboardInterrupt:
+            print("Ended process")
 
 
 

@@ -1,5 +1,12 @@
 from rc6 import *
 
+#########################
+#                       #
+# USED ONLY FOR TESTING #
+#                       #
+#########################
+
+
 #plaintext 02 13 24 35 46 57 68 79 8a 9b ac bd ce df e0 f1
 #user key 01 23 45 67 89 ab cd ef 01 12 23 34 45 56 67 78
 #ciphertext 52 4e 19 2f 47 15 c6 23 1f 51 f6 36 7e a4 3f 18

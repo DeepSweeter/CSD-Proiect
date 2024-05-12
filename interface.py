@@ -20,7 +20,7 @@ class Updater(FileSystemEventHandler):
         self.app.update_files()
 
 class mainPanel:
-    def __init__(self) -> None:
+    def __init__(self, server_address) -> None:
         self.window = tk.Tk()
         self.window.geometry("1000x510")
         self.window.title("RC6 network aplication")
@@ -29,7 +29,7 @@ class mainPanel:
         self.window.protocol("WM_DELETE_WINDOW", self.onClose)
 
         # Connection handler
-        self.ch = connection_handler("127.0.0.5")
+        self.ch = connection_handler(server_address)
 
         # Buttons
 
@@ -109,11 +109,11 @@ class mainPanel:
         observer.start()
 
         # My IP
-        ip = socket.gethostbyname(socket.gethostname())
+        ip = server_address
         self.label7 = tk.Label(self.window, text="My IP: ", font=("Arial Black", 9))
         self.label7.place(x=580, y=465)
         self.text_box_myip = tk.Text(self.window, font=("Times New Roman", 12), relief="flat")
-        self.text_box_myip.place(x=630, y=465, width=120, height=20)
+        self.text_box_myip.place(x=630, y=465, width=120, height=27)
         self.text_box_myip.insert(tk.END, ip)
         self.text_box_myip.config(state="disable")
 
@@ -201,11 +201,18 @@ class mainPanel:
         self.ch.send_file(self.comboboxIP.get(), self.text_file_name)
 
     def onClose(self):
+        self.ch.client.shutdown = True
+        self.ch.server.shutdown = True
         self.ch.client.sock.close()
         for s_client in self.ch.server.clients.values():
             print(s_client)
             s_client.close()
         self.ch.server.sock.close()
+        self.window.destroy()
 
-mp = mainPanel()
-mp.window.mainloop()
+
+
+if __name__ == '__main__':
+    server_address = get_local_ip()
+    mp = mainPanel(server_address)
+    mp.window.mainloop()

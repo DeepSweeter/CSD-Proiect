@@ -1,5 +1,5 @@
 import struct
-
+import socket
 #Constants
 w = 32
 r = 20
@@ -70,3 +70,15 @@ def pad_to_128_bits(plain_text):
 
 def split_in_pack_1376B(cypher_text):
     return [cypher_text[k:k + 1376] for k in range(0, len(cypher_text), 1376)]
+
+def get_local_ip():
+    try:
+        # Create a socket
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))  # Connect to a known external server
+        local_ip = s.getsockname()[0]  # Get the local IP address
+        s.close()
+        return local_ip
+    except Exception as e:
+        print("Error:", e)
+        return None
