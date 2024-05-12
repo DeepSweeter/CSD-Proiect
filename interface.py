@@ -29,7 +29,9 @@ class mainPanel:
         self.window.protocol("WM_DELETE_WINDOW", self.onClose)
 
         # Connection handler
+        #self.ch = connection_handler(server_address)
         self.ch = connection_handler(server_address)
+
 
         # Buttons
 

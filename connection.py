@@ -58,20 +58,29 @@ class server:
             nr0 = 0
             while not self.shutdown:
                 data = b''
-
+                full_msg = b''
+                configuration_msg = b''
                 data = conn.recv(16)
-                if not data:
-                    continue
+                # if not data:
+                #     continue
                 print("Data = " + str(data))
-                data = data.decode()
-                splitted = data.split(" ")
+                for byte_i in data:
+                    try:
+                        byte = bytes([byte_i])
+                        byte.decode()
+                        configuration_msg += byte
+                    except UnicodeDecodeError:
+                        full_msg += byte
+                        
+                configuration_msg = configuration_msg.decode()
+                splitted = configuration_msg.split(" ")
                 header = splitted[0]
                 nr0 = int(splitted[1])
                 msg_len = int(splitted[2])
                 if header == "nr0":
                     #process the rest of the message
                     eot_flag = False
-                    full_msg = b''
+                    
                     
                     while len(full_msg) < msg_len:
                         print("Msg_curren_len = " + str(len(full_msg)))
@@ -79,10 +88,26 @@ class server:
                         full_msg += new_data
                         if self.shutdown:
                             break
+                    eot_rcv = b''
+                    if(len(full_msg) > msg_len):
+                        for byte_i in full_msg[msg_len:]:
+                            try:
+                                byte = bytes([byte_i])
+                                byte.decode()
+                                eot_rcv += byte
+                            except UnicodeDecodeError:
+                                pass
+                        if(eot_rcv.decode() == EOT):
+                            eot_flag = True
 
+
+                    print(str(full_msg))
+                    print("New msg len: " + str(len(full_msg)))
 
                     while not eot_flag:
-                        eot_data = conn.recv(1024).decode()
+                        eot_data = conn.recv(1024)
+                        eot_rcv += eot_data
+                        eot_data = eot_rcv.decode()
                         print("Eot data recv = " + eot_data)
                         if eot_data.find(EOT) != -1:
                             eot_flag = True
@@ -90,7 +115,7 @@ class server:
                             break
 
                         
-                    to_decrypt = full_msg
+                    to_decrypt = full_msg[:msg_len]
                                 
                     print("to_decrypt" + str(to_decrypt))
                     #Decrypt
@@ -139,20 +164,28 @@ class client:
             nr0 = 0
             while not self.shutdown:
                 data = b''
-
+                full_msg = b''
+                configuration_msg = b''
                 data = self.sock.recv(16)
-                if not data:
-                    continue
+                # if not data:
+                #     continue
                 print("Data = " + str(data))
-                data = data.decode()
-                splitted = data.split(" ")
+                for byte_i in data:
+                    try:
+                        byte = bytes([byte_i])
+                        byte.decode()
+                        configuration_msg += byte
+                    except UnicodeDecodeError:
+                        full_msg += byte
+                        
+                configuration_msg = configuration_msg.decode()
+                splitted = configuration_msg.split(" ")
                 header = splitted[0]
                 nr0 = int(splitted[1])
                 msg_len = int(splitted[2])
                 if header == "nr0":
                     #process the rest of the message
                     eot_flag = False
-                    full_msg = b''
                     
                     while len(full_msg) < msg_len:
                         print("Msg_curren_len = " + str(len(full_msg)))
@@ -160,12 +193,26 @@ class client:
                         full_msg += new_data
                         if self.shutdown:
                             break
-                        #Process text
-                        # if not new_data:
-                        #     break
+                    eot_rcv = b''
+                    if(len(full_msg) > msg_len):
+                        for byte_i in full_msg[msg_len:]:
+                            try:
+                                byte = bytes([byte_i])
+                                byte.decode()
+                                eot_rcv += byte
+                            except UnicodeDecodeError:
+                                pass
+                        if(eot_rcv.decode() == EOT):
+                            eot_flag = True
+
+
+                    print(str(full_msg))
+                    print("New msg len: " + str(len(full_msg)))
 
                     while not eot_flag:
-                        eot_data = self.sock.recv(1024).decode()
+                        eot_data = self.sock.recv(1024)
+                        eot_rcv += eot_data
+                        eot_data = eot_rcv.decode()
                         print("Eot data recv = " + eot_data)
                         if eot_data.find(EOT) != -1:
                             eot_flag = True
@@ -173,7 +220,7 @@ class client:
                             break
 
                         
-                    to_decrypt = full_msg
+                    to_decrypt = full_msg[:msg_len]
                                 
                     print("to_decrypt" + str(to_decrypt))
                     #Decrypt
@@ -184,6 +231,8 @@ class client:
                     with open(file_name, 'w') as file:
                         file.write(decrypted.decode())
                     eot_flag = True
+
+
         except KeyboardInterrupt:
             print("Ended process")
 
@@ -232,19 +281,21 @@ class connection_handler:
             #For each 1376 blocks of data sendall
         if(connections[addr][1] == 'client'):
             self.client.sock.sendall(header_nr0.encode())
+            time.sleep(0.1)
             #self.client.sock.sendall(header_cypher.encode())
             for pack in en_splited:
                 data = str(pack).encode()
-                time.sleep(0.001)
+                
                 self.client.sock.sendall(pack)
             self.client.sock.sendall(header_eot.encode())
             
         elif(connections[addr][1] == 'server'):
             self.server.clients[addr].sendall(header_nr0.encode())
+            time.sleep(0.1)
             #self.server.clients[addr].sendall(header_cypher.encode())
             for pack in en_splited:
                 data = str(pack).encode()
-                time.sleep(0.001)
+                
                 self.server.clients[addr].sendall(pack)
                 
             self.server.clients[addr].sendall(header_eot.encode())        
