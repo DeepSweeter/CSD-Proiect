@@ -70,7 +70,7 @@ class mainPanel:
         self.text_box_plain_text.place(x=20, y=20, width=400, height=300)
 
         # Textbox cypher text
-        self.label2 = tk.Label(self.window, text="Cypher text:", font=("Arial Black", 8))
+        self.label2 = tk.Label(self.window, text="Received text:", font=("Arial Black", 8))
         self.label2.place(x=580, y=0)
         self.text_box_cypher_text = tk.Text(self.window, font=("Times New Roman", 14), foreground="darkred", relief="solid")
         self.text_box_cypher_text.place(x=580, y=20, width=400, height=430)

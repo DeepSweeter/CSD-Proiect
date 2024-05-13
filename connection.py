@@ -56,13 +56,12 @@ class server:
 
             #Listen for each client connected
             nr0 = 0
+            # See client version of receive_file to see more comments
             while not self.shutdown:
                 data = b''
                 full_msg = b''
                 configuration_msg = b''
                 data = conn.recv(16)
-                # if not data:
-                #     continue
                 print("Data = " + str(data))
                 for byte_i in data:
                     try:
@@ -78,12 +77,8 @@ class server:
                 nr0 = int(splitted[1])
                 msg_len = int(splitted[2])
                 if header == "nr0":
-                    #process the rest of the message
-                    eot_flag = False
-                    
-                    
+                    eot_flag = False    
                     while len(full_msg) < msg_len:
-                        print("Msg_curren_len = " + str(len(full_msg)))
                         new_data = conn.recv(msg_len)
                         full_msg += new_data
                         if self.shutdown:
@@ -100,28 +95,20 @@ class server:
                         if(eot_rcv.decode() == EOT):
                             eot_flag = True
 
-
-                    print(str(full_msg))
-                    print("New msg len: " + str(len(full_msg)))
-
                     while not eot_flag:
                         eot_data = conn.recv(1024)
                         eot_rcv += eot_data
                         eot_data = eot_rcv.decode()
-                        print("Eot data recv = " + eot_data)
                         if eot_data.find(EOT) != -1:
                             eot_flag = True
                         if self.shutdown:
                             break
-
                         
                     to_decrypt = full_msg[:msg_len]
                                 
-                    print("to_decrypt" + str(to_decrypt))
                     #Decrypt
                     decrypted = decrypt_variable_length(to_decrypt, connections[addr][0], nr0)
                     #Put into file
-                    print("Decrypted = " + decrypted.decode())
                     file_name = "./Received Data/" + addr + ".txt"
                     with open(file_name, 'w') as file:
                         file.write(decrypted.decode())
@@ -159,17 +146,14 @@ class client:
     
     #Listen for messages
     def receive_file(self, addr):
-        try:
-        
+        try:     
             nr0 = 0
             while not self.shutdown:
                 data = b''
                 full_msg = b''
                 configuration_msg = b''
                 data = self.sock.recv(16)
-                # if not data:
-                #     continue
-                print("Data = " + str(data))
+                # Check if every byte from data can be decode, if not it means that it contains some bytes from the encryption message
                 for byte_i in data:
                     try:
                         byte = bytes([byte_i])
@@ -184,9 +168,8 @@ class client:
                 nr0 = int(splitted[1])
                 msg_len = int(splitted[2])
                 if header == "nr0":
-                    #process the rest of the message
                     eot_flag = False
-                    
+                    # Receive while the len of the totally received bytes are less than than the total length specified in the configuration header
                     while len(full_msg) < msg_len:
                         print("Msg_curren_len = " + str(len(full_msg)))
                         new_data = self.sock.recv(msg_len)
@@ -194,6 +177,7 @@ class client:
                         if self.shutdown:
                             break
                     eot_rcv = b''
+                    # If the lenght of the received bytes are bigger than the total length it means that the message contains the end_of_transmission header it has to be removed
                     if(len(full_msg) > msg_len):
                         for byte_i in full_msg[msg_len:]:
                             try:
@@ -205,10 +189,6 @@ class client:
                         if(eot_rcv.decode() == EOT):
                             eot_flag = True
 
-
-                    print(str(full_msg))
-                    print("New msg len: " + str(len(full_msg)))
-
                     while not eot_flag:
                         eot_data = self.sock.recv(1024)
                         eot_rcv += eot_data
@@ -219,13 +199,13 @@ class client:
                         if self.shutdown:
                             break
 
-                        
+                    # Decrypt the received text    
                     to_decrypt = full_msg[:msg_len]
                                 
                     print("to_decrypt" + str(to_decrypt))
                     #Decrypt
                     decrypted = decrypt_variable_length(to_decrypt, connections[addr][0], nr0)
-                    #Put into file
+                    #Put into file with it's name as the ip address from whom it received
                     print("Decrypted = " + decrypted.decode())
                     file_name = "./Received Data/" + addr + ".txt"
                     with open(file_name, 'w') as file:
@@ -265,12 +245,11 @@ class connection_handler:
     
     def send_file(self, addr, file_name):
         #Open file and read it
-        #For now is file_name is hardcoded
-        #file_name= "Files/fisier_test.txt"
-        #Encrypt data
+
         with open(file_name, 'r') as file:
             text = file.read()
-
+            
+        #Encrypt data
         encrypted, nr0 = encrypt_variable_length(text.encode(), connections[addr][0])
         en_splited = functions.split_in_pack_1376B(encrypted)
 
@@ -278,35 +257,27 @@ class connection_handler:
         header_eot = EOT
 
         #While there is still encrypted data, send data
-            #For each 1376 blocks of data sendall
+        #For each 1376 blocks of data sendall
         if(connections[addr][1] == 'client'):
+            # Send configuration header
             self.client.sock.sendall(header_nr0.encode())
             time.sleep(0.1)
-            #self.client.sock.sendall(header_cypher.encode())
+            # For each block of 1376 bytes send data
             for pack in en_splited:
-                data = str(pack).encode()
-                
                 self.client.sock.sendall(pack)
+            # Send EOT header to end current transaction
             self.client.sock.sendall(header_eot.encode())
             
         elif(connections[addr][1] == 'server'):
+            # Send configuration header
             self.server.clients[addr].sendall(header_nr0.encode())
             time.sleep(0.1)
-            #self.server.clients[addr].sendall(header_cypher.encode())
             for pack in en_splited:
-                data = str(pack).encode()
-                
+                # For each block of 1376 bytes send data
                 self.server.clients[addr].sendall(pack)
-                
+            # Send EOT header to end current transaction    
             self.server.clients[addr].sendall(header_eot.encode())        
-
         
-
-
-
-
-
-            
 
 
 
@@ -320,25 +291,26 @@ class DiffieHellman:
         return pow(other_public_key, own_private_key, P)
     
 
+# Used for testing
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
     
     
-    type_cmd = input("Type cmd = ")
+#     type_cmd = input("Type cmd = ")
 
-    if(type_cmd == '1'):
-        ch = connection_handler('127.0.0.6')
-        ch.connect('localhost')
-        print("Shared Key = :" + str(connections["localhost"][0]))
-    elif(type_cmd == '2'):
-        ch = connection_handler('localhost')
-        input("Enter to stop waiting")
-        print("Shared Key = :" + str(next(iter(connections.values()))[0]))
+#     if(type_cmd == '1'):
+#         ch = connection_handler('127.0.0.6')
+#         ch.connect('localhost')
+#         print("Shared Key = :" + str(connections["localhost"][0]))
+#     elif(type_cmd == '2'):
+#         ch = connection_handler('localhost')
+#         input("Enter to stop waiting")
+#         print("Shared Key = :" + str(next(iter(connections.values()))[0]))
 
-    while True:
-        try:
-            pass
-        except KeyboardInterrupt:
-            ch.client.sock.close()
-            ch.server.sock.close()
+#     while True:
+#         try:
+#             pass
+#         except KeyboardInterrupt:
+#             ch.client.sock.close()
+#             ch.server.sock.close()
 
